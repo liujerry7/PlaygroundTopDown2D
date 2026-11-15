@@ -1,0 +1,32 @@
+# Visual Studio / MSBuild build output
+Temporary/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+
+# Visual Studio cache / user-specific files
+.vs/
+*.vcxproj.user
+*.suo
+*.user
+*.VC.db
+*.VC.VC.opendb
+
+# Build artifacts
+*.obj
+*.pch
+*.ipch
+*.idb
+*.pdb
+*.ilk
+*.tlog
+*.lib
+*.exp
+*.exe
+*.dll
+*.log
+
+# OS cruft
+Thumbs.db
+Desktop.ini
+.DS_Store

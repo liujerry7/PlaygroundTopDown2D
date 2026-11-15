@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../Jumble/Code/Engine/Jumble.vcxproj" Id="fb8f5c99-3506-4972-9d46-0ba1530cdea4" />
+  <Project Path="Code/Game/Game.vcxproj" Id="176db859-c0c2-4fcd-b395-50d560c3f79e" />
+</Solution>
