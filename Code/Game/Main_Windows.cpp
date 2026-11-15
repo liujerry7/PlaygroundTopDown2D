@@ -2,21 +2,20 @@
 #include <windows.h>
 #include "Engine/Core/EngineCommon.hpp"
 #include "Game/App.hpp"
+#include "Game/GameCommon.hpp"
 
-int WINAPI WinMain(HINSTANCE applicationInstanceHandle, HINSTANCE, LPSTR commandLineString, int)
+int WINAPI WinMain(_In_ HINSTANCE applicationInstanceHandle, _In_opt_ HINSTANCE, _In_ LPSTR commandLineString, _In_ int)
 {
 	UNUSED(applicationInstanceHandle);
 	UNUSED(commandLineString);
 
-	g_app = new App();
+	g_theApp = new App();
+	g_theApp->Startup();
+	g_theApp->RunMainLoop();
+	g_theApp->Shutdown();
 
-	while (!g_app->IsQuitting())
-	{
-		g_app->RunFrame();
-	}
-
-	delete g_app;
-	g_app = nullptr;
+	delete g_theApp;
+	g_theApp = nullptr;
 
 	return 0;
 }

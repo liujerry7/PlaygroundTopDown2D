@@ -1,49 +1,22 @@
-# Libra
+# PlaygroundTopDown2D
 
-Top-down tank playground built on the **Jumble** engine. It's a place to experiment with tile effects and the World / TileMap / Body split from the school Libra project (SD1), not a finished game.
+Top-down 2D playground. It's an empty ProtoGame2D-style template on the **Jumble** engine, for playing around.
 
 ## Building
-- Open `Libra.slnx` in Visual Studio 2026 (toolset v145). The engine project lives in the sibling repo at `../Jumble/Code/Engine/Jumble.vcxproj`, so both repos must be checked out side by side under the same parent folder.
-- Build Debug or Release, x64 or x86. A post-build step copies the exe (`Libra_<Config>_<Platform>.exe`) into `Run/`, and the debugger runs it from there.
-- Audio is turned off in `Code/Game/EngineBuildPreferences.hpp`, so no FMOD DLL is needed. Delete that define when you want sound.
+- Open `PlaygroundTopDown2D.slnx` in Visual Studio 2026 (toolset v145). The engine project lives in the sibling repo at `../Jumble/Code/Engine/Jumble.vcxproj`, so both repos must be checked out side by side under the same parent folder.
+- Build Debug or Release, x64 or x86. A post-build step copies the exe (`PlaygroundTopDown2D_<Config>_<Platform>.exe`) into `Run/`, and the debugger runs it from there, so `Data/...` paths resolve against `Run/`.
+- Audio is turned off in `Code/Game/EngineBuildPreferences.hpp`, so no FMOD DLL is needed. Delete that define when you want sound (and put `fmod64.dll` in `Run/`).
 
-## Controls
-The window title shows the current mode, the brush, and messages such as "Saved". Jumble has no text rendering yet.
+## Layout
+- `Main_Windows.cpp`: `WinMain` creates the `App`, then runs Startup, the main loop and Shutdown.
+- `App`: creates the Jumble `Engine` and the `Game`, runs the frame (BeginFrame → Update → Render → EndFrame) and owns the game clock.
+- `Game`: the empty game, with a world camera (200x100 world units) and a screen camera (1600x800).
+- `GameCommon`: the `g_theApp` / `g_theRenderer` / `g_theInput` / `g_theAudio` / `g_theWindow` shortcuts and world/screen size constants.
 
-| Mode | Action | Keys |
-|---|---|---|
-| Both | Toggle play / edit | Tab |
-| Both | Save / load `Run/Data/Maps/Playground.txt` | F6 / F9 |
-| Play | Drive (8-way, the hull turns toward the heading) | E S D F |
-| Play | Aim turret | I J K L |
-| Play | Fire | Space |
-| Edit | Pick brush | 1–7, or click a swatch |
-| Edit | Paint / erase to grass | Left / right mouse |
-| Edit | Flood-fill the hovered region | F |
-| Edit | Eyedropper | Q |
-
-### Debug keys
+## Debug keys
 - **P** pause, **O** step one frame, **T** (hold) 10% speed
-- **F8** rebuild the game (reloads the map from disk)
+- **F8** restart the game
 - **Esc** quit
 
-## Tiles
-Defined in one table in `Code/Game/TileDefinition.cpp`. Add a row there and it shows up in the palette.
-
-| Tile | Glyph | Effect |
-|---|---|---|
-| Grass | `.` | Normal drag |
-| Stone | `#` | Blocks tanks and bullets |
-| Brick | `B` | Blocks tanks and bullets; a bullet breaks it |
-| Mud | `m` | High drag |
-| Ice | `i` | Almost no drag, so the tank slides |
-| Sand | `s` | Medium drag |
-| Water | `~` | Blocks tanks, but bullets fly over it |
-
-Bullets bounce off walls up to 3 times. The area outside the map counts as stone.
-
-## How it's put together
-- **TileMap**: just the grid. It batches all tiles into one vertex array and rebuilds it only after an edit. It also handles map files (one text row per tile row, top row first).
-- **Tank**: owns a Jumble `Body` and reads input. It knows nothing about tiles.
-- **World**: owns the map, the tank and the bullets. Each frame it updates the entities, then pushes the tank out of solid neighbors and eases the tank's drag toward the drag of the tile under it.
-- **TilePalette**: the edit-mode tool. **Game** switches modes and owns the cameras.
+## History
+The first commit holds an earlier prototype, kept for reference: a tank playground with a tile-palette editor (as Libra).

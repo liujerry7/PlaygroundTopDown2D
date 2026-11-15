@@ -4,24 +4,49 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
 
-App* g_app = nullptr;
-
 App::App()
 {
-	EngineConfig config;
-	config.m_windowConfig.m_windowTitle  = "Libra";
-	config.m_windowConfig.m_clientAspect = SCREEN_SIZE_X / SCREEN_SIZE_Y;
-
-	new Engine(config); // sets g_engine
-	m_game = new Game();
 }
 
 App::~App()
 {
-	delete m_game;
-	m_game = nullptr;
+}
+
+void App::Startup()
+{
+	EngineConfig config;
+	config.m_windowConfig.m_windowTitle  = "PlaygroundTopDown2D";
+	config.m_windowConfig.m_clientAspect = SCREEN_SIZE_X / SCREEN_SIZE_Y;
+
+	new Engine(config); // sets g_engine
+
+	g_theRenderer = g_engine->m_renderer;
+	g_theInput    = g_engine->m_inputSystem;
+	g_theAudio    = g_engine->m_audioSystem;
+	g_theWindow   = g_engine->m_window;
+
+	m_theGame = new Game();
+}
+
+void App::Shutdown()
+{
+	delete m_theGame;
+	m_theGame = nullptr;
+
+	g_theRenderer = nullptr;
+	g_theInput    = nullptr;
+	g_theAudio    = nullptr;
+	g_theWindow   = nullptr;
 
 	delete g_engine;
+}
+
+void App::RunMainLoop()
+{
+	while (!IsQuitting())
+	{
+		RunFrame();
+	}
 }
 
 void App::RunFrame()
@@ -34,58 +59,66 @@ void App::RunFrame()
 
 bool App::IsQuitting() const
 {
-	return m_isQuitting || g_engine->m_window->m_quitRequested;
+	return m_isQuitting;
+}
+
+void App::HandleQuitRequested()
+{
+	m_isQuitting = true;
 }
 
 void App::BeginFrame()
 {
 	g_engine->BeginFrame();
-	m_clock.BeginFrame();
+	m_gameClock.BeginFrame();
+
+	if (g_theWindow->m_quitRequested)
+	{
+		HandleQuitRequested();
+	}
 }
 
 void App::Update()
 {
 	HandleDeveloperKeys();
-	m_game->Update(m_clock.GetDeltaSeconds());
+	m_theGame->Update(m_gameClock.GetDeltaSeconds());
 }
 
 void App::Render() const
 {
-	m_game->Render();
+	m_theGame->Render();
 }
 
 void App::EndFrame()
 {
-	m_clock.EndFrame();
+	m_gameClock.EndFrame();
 	g_engine->EndFrame();
 }
 
-// Esc quits, F8 rebuilds the Game, P pauses, O steps one frame, T (held) runs at 10% speed.
+// Esc quits, F8 restarts the game, P pauses, O steps one frame, T (held) runs at 10% speed.
 void App::HandleDeveloperKeys()
 {
-	InputSystem const* input = g_engine->m_inputSystem;
-
-	if (input->WasKeyJustPressed(KEYCODE_ESC))
+	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
 	{
-		m_isQuitting = true;
+		HandleQuitRequested();
 	}
 
-	if (input->WasKeyJustPressed(KEYCODE_F8))
+	if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
 	{
-		delete m_game;
-		m_game = new Game();
+		delete m_theGame;
+		m_theGame = new Game();
 	}
 
-	if (input->WasKeyJustPressed('P'))
+	if (g_theInput->WasKeyJustPressed('P'))
 	{
-		m_clock.TogglePaused();
+		m_gameClock.TogglePaused();
 	}
 
-	if (input->WasKeyJustPressed('O'))
+	if (g_theInput->WasKeyJustPressed('O'))
 	{
-		m_clock.SetPaused(true);
-		m_clock.Step();
+		m_gameClock.SetPaused(true);
+		m_gameClock.Step();
 	}
 
-	m_clock.SetTimeScale(input->IsKeyDown('T') ? 0.1f : 1.f);
+	m_gameClock.SetTimeScale(g_theInput->IsKeyDown('T') ? 0.1f : 1.f);
 }

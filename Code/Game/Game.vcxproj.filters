@@ -21,21 +21,6 @@
     <ClCompile Include="Main_Windows.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Tank.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="TileDefinition.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="TileMap.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="TilePalette.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="World.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -49,21 +34,6 @@
     </ClInclude>
     <ClInclude Include="GameCommon.hpp">
       <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Tank.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="TileDefinition.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="TileMap.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="TilePalette.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="World.hpp">
-      <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
