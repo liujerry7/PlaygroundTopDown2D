@@ -18,7 +18,7 @@ void App::Startup()
 	config.m_windowConfig.m_windowTitle  = "PlaygroundTopDown2D";
 	config.m_windowConfig.m_clientAspect = SCREEN_SIZE_X / SCREEN_SIZE_Y;
 
-	new Engine(config); // sets g_engine
+	new Engine(config);
 
 	g_theRenderer = g_engine->m_renderer;
 	g_theInput    = g_engine->m_inputSystem;
@@ -72,7 +72,7 @@ void App::BeginFrame()
 	g_engine->BeginFrame();
 	m_gameClock.BeginFrame();
 
-	if (g_theWindow->m_quitRequested)
+	if (g_theWindow->m_isQuitRequested)
 	{
 		HandleQuitRequested();
 	}
@@ -95,7 +95,6 @@ void App::EndFrame()
 	g_engine->EndFrame();
 }
 
-// Esc quits, F8 restarts the game, P pauses, O steps one frame, T (held) runs at 10% speed.
 void App::HandleDeveloperKeys()
 {
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))

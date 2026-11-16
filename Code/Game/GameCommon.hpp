@@ -6,7 +6,6 @@ class InputSystem;
 class Renderer;
 class Window;
 
-// Shortcuts to the engine's subsystems, set by App::Startup. g_engine owns them.
 extern App*         g_theApp;
 extern Renderer*    g_theRenderer;
 extern InputSystem* g_theInput;
