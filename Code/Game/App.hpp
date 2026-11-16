@@ -26,7 +26,7 @@ private:
 	void HandleDeveloperKeys();
 
 private:
-	Game* m_theGame    = nullptr;
+	Game* m_theGame = nullptr;
 	Clock m_gameClock;
 	bool  m_isQuitting = false;
 };
