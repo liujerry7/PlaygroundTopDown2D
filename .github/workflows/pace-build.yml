@@ -20,13 +20,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out the game
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: PlaygroundTopDown2D
 
       - name: Check out the Jumble engine
         id: engine
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: liujerry7/Jumble
           ssh-key: ${{ secrets.JUMBLE_DEPLOY_KEY }}
