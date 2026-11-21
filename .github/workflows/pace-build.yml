@@ -1,11 +1,15 @@
 # Builds every push to Pace's work branch with Visual Studio 2026, next to the
 # Jumble engine, and writes the result (pass/fail plus compiler errors) to
 # status.json on the "<branch>-builds" branch, where Pace reads it.
+# Jumble comes from its branch of the same name (Pace's changes to the engine)
+# when that exists, else its default branch; status.json records which commit,
+# so Pace can rebuild when only the engine changed.
 name: Pace build
 
 on:
   push:
     branches: [pace]
+  workflow_dispatch:
 
 concurrency:
   group: pace-build-${{ github.ref_name }}
@@ -24,8 +28,19 @@ jobs:
         with:
           path: PlaygroundTopDown2D
 
-      - name: Check out the Jumble engine
-        id: engine
+      - name: Check out the Jumble engine (same branch)
+        id: engine_branch
+        continue-on-error: true
+        uses: actions/checkout@v5
+        with:
+          repository: liujerry7/Jumble
+          ref: ${{ github.ref_name }}
+          ssh-key: ${{ secrets.JUMBLE_DEPLOY_KEY }}
+          path: Jumble
+
+      - name: Check out the Jumble engine (default branch)
+        id: engine_default
+        if: ${{ steps.engine_branch.outcome != 'success' }}
         uses: actions/checkout@v5
         with:
           repository: liujerry7/Jumble
@@ -50,7 +65,7 @@ jobs:
         shell: pwsh
         env:
           BUILD_OUTCOME: ${{ steps.build.outcome }}
-          ENGINE_OUTCOME: ${{ steps.engine.outcome }}
+          ENGINE_OUTCOME: ${{ steps.engine_branch.outcome == 'success' && 'success' || steps.engine_default.outcome }}
           TOKEN: ${{ github.token }}
         run: |
           $root = ($env:GITHUB_WORKSPACE -replace '\\', '/') + '/'
@@ -67,6 +82,13 @@ jobs:
             $result = 'setup_failed'
             $errors = @('Could not check out the Jumble engine. Is the JUMBLE_DEPLOY_KEY secret set?')
           } elseif ($env:BUILD_OUTCOME -eq 'success') { $result = 'passed' } else { $result = 'failed' }
+          $deps = [ordered]@{}
+          if ($env:ENGINE_OUTCOME -eq 'success') {
+            $deps['liujerry7/Jumble'] = [ordered]@{
+              ref = (git -C Jumble rev-parse --abbrev-ref HEAD).Trim()
+              sha = (git -C Jumble rev-parse HEAD).Trim()
+            }
+          }
           $status = [ordered]@{
             sha        = $env:GITHUB_SHA
             branch     = $env:GITHUB_REF_NAME
@@ -75,6 +97,7 @@ jobs:
             warningCount = $warnings.Count
             errors     = @($errors | Select-Object -First 40)
             warnings   = @($warnings | Select-Object -First 15)
+            deps       = $deps
             url        = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
             finishedAt = (Get-Date).ToUniversalTime().ToString('o')
           }
