@@ -38,5 +38,8 @@
     <ClInclude Include="GameCommon.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
+    <ClInclude Include="TileGrid.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
