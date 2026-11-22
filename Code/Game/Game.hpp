@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Renderer/Camera.hpp"
+#include "Game/Player.hpp"
 
 class Game
 {
@@ -17,4 +18,5 @@ private:
 private:
 	Camera m_worldCamera;
 	Camera m_screenCamera;
+	Player m_player;
 };
