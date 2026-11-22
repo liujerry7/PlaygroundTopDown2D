@@ -1,0 +1,111 @@
+# Builds every push to Pace's work branch with Visual Studio 2026, next to the
+# Jumble engine, and writes the result (pass/fail plus compiler errors) to
+# status.json on the "<branch>-builds" branch, where Pace reads it.
+# Jumble comes from its branch of the same name (Pace's changes to the engine)
+# when that exists, else its default branch; status.json records which commit,
+# so Pace can rebuild when only the engine changed.
+name: Pace build
+
+on:
+  push:
+    branches: [pace]
+  workflow_dispatch:
+
+concurrency:
+  group: pace-build-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 20
+    steps:
+      - name: Check out the game
+        uses: actions/checkout@v5
+        with:
+          path: PlaygroundTopDown2D
+
+      - name: Check out the Jumble engine (same branch)
+        id: engine_branch
+        continue-on-error: true
+        uses: actions/checkout@v5
+        with:
+          repository: liujerry7/Jumble
+          ref: ${{ github.ref_name }}
+          ssh-key: ${{ secrets.JUMBLE_DEPLOY_KEY }}
+          path: Jumble
+
+      - name: Check out the Jumble engine (default branch)
+        id: engine_default
+        if: ${{ steps.engine_branch.outcome != 'success' }}
+        uses: actions/checkout@v5
+        with:
+          repository: liujerry7/Jumble
+          ssh-key: ${{ secrets.JUMBLE_DEPLOY_KEY }}
+          path: Jumble
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build Debug x64
+        id: build
+        shell: pwsh
+        working-directory: PlaygroundTopDown2D
+        run: |
+          msbuild PlaygroundTopDown2D.slnx /m /nologo /v:minimal `
+            /p:Configuration=Debug /p:Platform=x64 `
+            "/flp1:errorsonly;logfile=$env:RUNNER_TEMP\errors.log" `
+            "/flp2:warningsonly;logfile=$env:RUNNER_TEMP\warnings.log"
+
+      - name: Publish the result for Pace
+        if: ${{ !cancelled() }}
+        shell: pwsh
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          ENGINE_OUTCOME: ${{ steps.engine_branch.outcome == 'success' && 'success' || steps.engine_default.outcome }}
+          TOKEN: ${{ github.token }}
+        run: |
+          $root = ($env:GITHUB_WORKSPACE -replace '\\', '/') + '/'
+          function Read-Log($path) {
+            if (-not (Test-Path $path)) { return @() }
+            Get-Content $path |
+              ForEach-Object { (($_ -replace '\\', '/') -replace [regex]::Escape($root), '') -replace '\s*\[[^\]]*\.vcxproj\]$', '' } |
+              Where-Object { $_.Trim() } |
+              Select-Object -Unique
+          }
+          $errors = @(Read-Log "$env:RUNNER_TEMP\errors.log")
+          $warnings = @(Read-Log "$env:RUNNER_TEMP\warnings.log")
+          if ($env:ENGINE_OUTCOME -ne 'success') {
+            $result = 'setup_failed'
+            $errors = @('Could not check out the Jumble engine. Is the JUMBLE_DEPLOY_KEY secret set?')
+          } elseif ($env:BUILD_OUTCOME -eq 'success') { $result = 'passed' } else { $result = 'failed' }
+          $deps = [ordered]@{}
+          if ($env:ENGINE_OUTCOME -eq 'success') {
+            $deps['liujerry7/Jumble'] = [ordered]@{
+              ref = (git -C Jumble rev-parse --abbrev-ref HEAD).Trim()
+              sha = (git -C Jumble rev-parse HEAD).Trim()
+            }
+          }
+          $status = [ordered]@{
+            sha        = $env:GITHUB_SHA
+            branch     = $env:GITHUB_REF_NAME
+            result     = $result
+            errorCount = $errors.Count
+            warningCount = $warnings.Count
+            errors     = @($errors | Select-Object -First 40)
+            warnings   = @($warnings | Select-Object -First 15)
+            deps       = $deps
+            url        = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            finishedAt = (Get-Date).ToUniversalTime().ToString('o')
+          }
+          New-Item -ItemType Directory -Force out | Out-Null
+          Set-Location out
+          $status | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8NoBOM status.json
+          git init -q -b "$env:GITHUB_REF_NAME-builds"
+          git add status.json
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" `
+            commit -q -m "Build $($env:GITHUB_SHA.Substring(0, 7)): $result"
+          git push -q --force "https://x-access-token:$env:TOKEN@github.com/$env:GITHUB_REPOSITORY.git" "HEAD:refs/heads/$env:GITHUB_REF_NAME-builds"
